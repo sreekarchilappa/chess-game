@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monument Valley Chess Game</title>
+    <link rel="stylesheet" href="src/styles/main.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Main Menu -->
+        <div id="mainMenu" class="screen active">
+            <div class="menu-container">
+                <h1>⚔️ Chess Game</h1>
+                <div class="stats-display">
+                    <div class="stat-item">
+                        <span class="stat-label">Wins</span>
+                        <span class="stat-value" id="statsWins">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Losses</span>
+                        <span class="stat-value" id="statsLosses">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Streak</span>
+                        <span class="stat-value" id="statsStreak">0</span>
+                    </div>
+                </div>
+                <div class="menu-buttons">
+                    <button class="btn btn-primary" onclick="app.startBotGame()">Play vs Bot</button>
+                    <button class="btn btn-secondary" onclick="app.startTwoPlayerGame()">2-Player Local</button>
+                    <button class="btn btn-tertiary" onclick="app.showSettings()">Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen">
+            <div class="game-container">
+                <div class="game-info">
+                    <div class="difficulty-info">
+                        <span id="difficultyName">Easy</span>
+                        <span id="pointsDisplay">0/5</span>
+                    </div>
+                    <div class="turn-info">
+                        <span id="turnDisplay">White's Turn</span>
+                    </div>
+                </div>
+                <div id="gameBoard" class="game-board"></div>
+                <div class="game-actions">
+                    <button class="btn btn-small" onclick="app.undoMove()">Undo</button>
+                    <button class="btn btn-small" onclick="app.resignGame()">Resign</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game End Screen -->
+        <div id="gameEndScreen" class="screen">
+            <div class="result-container">
+                <div class="result-title" id="resultTitle">Victory!</div>
+                <div class="result-details" id="resultDetails">
+                    <p id="resultMessage">You won!</p>
+                    <div id="pointsEarned"></div>
+                </div>
+                <div class="result-buttons">
+                    <button class="btn btn-primary" onclick="app.playAgain()">Play Again</button>
+                    <button class="btn btn-secondary" onclick="app.backToMenu()">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Difficulty Select Screen -->
+        <div id="difficultyScreen" class="screen">
+            <div class="difficulty-container">
+                <h2>Select Difficulty</h2>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn" onclick="app.selectDifficulty(1)">
+                        <div class="difficulty-level">Easy</div>
+                        <div class="difficulty-desc">Great for learning</div>
+                    </button>
+                    <button class="difficulty-btn" onclick="app.selectDifficulty(2)">
+                        <div class="difficulty-level">Medium</div>
+                        <div class="difficulty-desc">A fair challenge</div>
+                    </button>
+                    <button class="difficulty-btn" onclick="app.selectDifficulty(3)">
+                        <div class="difficulty-level">Hard</div>
+                        <div class="difficulty-desc">Very challenging</div>
+                    </button>
+                    <button class="difficulty-btn" onclick="app.selectDifficulty(4)">
+                        <div class="difficulty-level">Impossible</div>
+                        <div class="difficulty-desc">Face the ultimate challenge</div>
+                    </button>
+                </div>
+                <button class="btn btn-secondary" onclick="app.showMainMenu()">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settingsScreen" class="screen">
+            <div class="settings-container">
+                <h2>Settings</h2>
+                <div class="settings-item">
+                    <label>Current Level: <span id="settingsDifficultyLevel">1</span></label>
+                    <label>Points: <span id="settingsDifficultyPoints">0</span>/5</label>
+                </div>
+                <div class="settings-buttons">
+                    <button class="btn btn-warning" onclick="app.resetStats()">Reset All Stats</button>
+                    <button class="btn btn-secondary" onclick="app.showMainMenu()">Back to Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
