@@ -178,7 +178,6 @@ class ChessBoardRenderer {
     this.boardGroup.add(pieceGroup);
     this.pieces[key] = pieceGroup;
   }
-  }
 
   getPieceGeometry(type) {
     const size = 0.55;
