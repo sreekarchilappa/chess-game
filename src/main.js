@@ -247,30 +247,60 @@ class ChessGameApp {
 }
 
 // Initialize app when DOM is ready
+console.log('=== Chess Game Script Loading ===');
+console.log('Current time:', new Date().toISOString());
+
+let appInitialized = false;
+
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOMContentLoaded event fired');
+  console.log('ChessGameApp available?', typeof ChessGameApp);
+  console.log('window.app before init:', window.app);
+  
   try {
+    if (typeof ChessGameApp === 'undefined') {
+      console.error('ERROR: ChessGameApp class not found! Module import may have failed.');
+      // Create a placeholder to avoid errors
+      window.app = {
+        startBotGame: () => alert('Game is loading, please wait...'),
+        startTwoPlayerGame: () => alert('Game is loading, please wait...'),
+        showSettings: () => alert('Game is loading, please wait...'),
+        selectDifficulty: () => alert('Game is loading, please wait...'),
+        playAgain: () => alert('Game is loading, please wait...'),
+        backToMenu: () => alert('Game is loading, please wait...'),
+        showMainMenu: () => alert('Game is loading, please wait...'),
+        undoMove: () => alert('Game is loading, please wait...'),
+        resignGame: () => alert('Game is loading, please wait...'),
+        resetStats: () => alert('Game is loading, please wait...')
+      };
+      return;
+    }
+    
+    console.log('Creating ChessGameApp instance...');
     window.app = new ChessGameApp();
-    window.app.showMainMenu();
+    appInitialized = true;
     console.log('✓ Chess game initialized successfully');
+    console.log('window.app methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.app)));
   } catch (error) {
-    console.error('Failed to initialize chess game:', error);
-    alert('Error initializing game. Please refresh the page.');
+    console.error('FAILED to initialize chess game:', error);
+    console.error('Error stack:', error.stack);
+    alert('Error initializing game: ' + error.message + '\n\nPlease open browser console (F12) for more details.');
   }
 });
 
-// Fallback for older browsers
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    if (!window.app) {
-      console.log('Retrying initialization...');
-      window.app = new ChessGameApp();
-      window.app.showMainMenu();
+// Fallback - wait a bit and try again if needed
+setTimeout(() => {
+  console.log('Timeout check - app initialized?', appInitialized);
+  if (!appInitialized && document.readyState === 'complete') {
+    console.log('Retrying initialization...');
+    try {
+      if (typeof ChessGameApp !== 'undefined' && !window.app) {
+        window.app = new ChessGameApp();
+        appInitialized = true;
+        console.log('✓ Chess game initialized on retry');
+      }
+    } catch (error) {
+      console.error('Retry failed:', error);
     }
-  });
-} else {
-  // DOM already loaded
-  if (!window.app) {
-    window.app = new ChessGameApp();
-    window.app.showMainMenu();
   }
-}
+}, 3000);
