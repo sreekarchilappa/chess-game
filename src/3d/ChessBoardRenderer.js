@@ -128,8 +128,10 @@ class ChessBoardRenderer {
       return;
     }
 
-    const geometry = this.getPieceGeometry(piece.type);
     const color = piece.color === 'white' ? 0xf5f5f5 : 0x333333;
+    const geometry = this.getPieceGeometry(piece.type);
+    
+    // Create mesh with material
     const material = new THREE.MeshStandardMaterial({
       color: color,
       roughness: 0.5,
@@ -147,37 +149,31 @@ class ChessBoardRenderer {
   }
 
   getPieceGeometry(type) {
-    const size = 0.3;
+    const size = 0.25;
 
     switch (type) {
       case 'pawn':
-        return new THREE.ConeGeometry(size * 0.4, size, 8);
+        return new THREE.ConeGeometry(size * 0.4, size * 0.8, 8);
 
       case 'knight':
-        // Simple horse-like shape
-        const knightGroup = new THREE.Group();
-        const knightBody = new THREE.BoxGeometry(size * 0.5, size * 0.6, size * 0.3);
-        knightGroup.add(new THREE.Mesh(knightBody));
-        const knightNeck = new THREE.BoxGeometry(size * 0.2, size * 0.4, size * 0.2);
-        const neckMesh = new THREE.Mesh(knightNeck);
-        neckMesh.position.y = size * 0.2;
-        knightGroup.add(neckMesh);
-        return knightGroup;
+        // Simple sphere for knight
+        return new THREE.SphereGeometry(size * 0.4, 8, 8);
 
       case 'bishop':
-        // Cone shape
+        // Tall cone
         return new THREE.ConeGeometry(size * 0.35, size * 1.2, 8);
 
       case 'rook':
-        // Box shape with indents
-        return new THREE.CylinderGeometry(size * 0.35, size * 0.4, size, 4);
+        // Cylinder
+        return new THREE.CylinderGeometry(size * 0.35, size * 0.4, size * 0.9, 4);
 
       case 'queen':
-        // Tall cone
+        // Taller cone
         return new THREE.ConeGeometry(size * 0.4, size * 1.4, 8);
 
       case 'king':
-        // Very tall cone with cross on top
+        // Tallest cone
+        return new THREE.ConeGeometry(size * 0.35, size * 1.6, 8);
         const kingGeom = new THREE.ConeGeometry(size * 0.35, size * 1.6, 8);
         return kingGeom;
 
