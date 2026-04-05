@@ -15,6 +15,33 @@ class ChessGameApp {
   }
 
   setupEventListeners() {
+    // Main menu buttons
+    document.getElementById('btnPlayBot')?.addEventListener('click', () => this.startBotGame());
+    document.getElementById('btnTwoPlayer')?.addEventListener('click', () => this.startTwoPlayerGame());
+    document.getElementById('btnSettings')?.addEventListener('click', () => this.showSettings());
+
+    // Game screen buttons
+    document.getElementById('btnUndo')?.addEventListener('click', () => this.undoMove());
+    document.getElementById('btnResign')?.addEventListener('click', () => this.resignGame());
+
+    // Game end screen buttons
+    document.getElementById('btnPlayAgain')?.addEventListener('click', () => this.playAgain());
+    document.getElementById('btnBackToMenu')?.addEventListener('click', () => this.backToMenu());
+
+    // Difficulty selection buttons
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const difficulty = parseInt(e.currentTarget.getAttribute('data-difficulty'));
+        this.selectDifficulty(difficulty);
+      });
+    });
+    document.getElementById('btnCancelDifficulty')?.addEventListener('click', () => this.showMainMenu());
+
+    // Settings buttons
+    document.getElementById('btnResetStats')?.addEventListener('click', () => this.resetStats());
+    document.getElementById('btnSettingsMenu')?.addEventListener('click', () => this.showMainMenu());
+
+    // Game end event
     window.addEventListener('gameEnd', (event) => {
       this.handleGameEnd(event.detail);
     });
