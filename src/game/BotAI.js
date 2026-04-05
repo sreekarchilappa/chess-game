@@ -62,9 +62,9 @@ class BotAI {
       for (const move of legalMoves) {
         const testEngine = gameEngine.copyState();
         testEngine.makeMove(move);
-        const eval = this.minimax(testEngine, depth - 1, alpha, beta, difficulty);
-        maxEval = Math.max(maxEval, eval);
-        alpha = Math.max(alpha, eval);
+        const evalScore = this.minimax(testEngine, depth - 1, alpha, beta, difficulty);
+        maxEval = Math.max(maxEval, evalScore);
+        alpha = Math.max(alpha, evalScore);
         if (beta <= alpha) break; // Prune
       }
       return maxEval;
@@ -73,9 +73,9 @@ class BotAI {
       for (const move of legalMoves) {
         const testEngine = gameEngine.copyState();
         testEngine.makeMove(move);
-        const eval = this.minimax(testEngine, depth - 1, alpha, beta, difficulty);
-        minEval = Math.min(minEval, eval);
-        beta = Math.min(beta, eval);
+        const evalScore = this.minimax(testEngine, depth - 1, alpha, beta, difficulty);
+        minEval = Math.min(minEval, evalScore);
+        beta = Math.min(beta, evalScore);
         if (beta <= alpha) break; // Prune
       }
       return minEval;
