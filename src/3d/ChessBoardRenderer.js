@@ -1,4 +1,4 @@
-// Three.js scene setup for Monument Valley–style chess board
+// Three.js Chess Board Renderer - Proper perspective from white's side
 
 class ChessBoardRenderer {
   constructor(containerElement) {
@@ -10,9 +10,8 @@ class ChessBoardRenderer {
     this.pieces = {};
     this.selectedSquare = null;
 
-    // Check if Three.js is available
     if (typeof THREE === 'undefined') {
-      console.error('Three.js not loaded. Waiting...');
+      console.error('Three.js not loaded. Retrying...');
       setTimeout(() => this.initialize(), 500);
     } else {
       this.initialize();
@@ -20,344 +19,305 @@ class ChessBoardRenderer {
   }
 
   initialize() {
-    // Scene setup
+    const width  = this.container.clientWidth;
+    const height = this.container.clientHeight;
+
+    // ── Scene ──────────────────────────────────────────────────────────────
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xf5e6d3);
 
-    // Camera setup - angled isometric view for better visibility
-    const width = this.container.clientWidth;
-    const height = this.container.clientHeight;
-    const aspect = width / height;
-
-    // Use perspective camera for realistic 3D view at an angle
-    this.camera = new THREE.PerspectiveCamera(
-      45,           // field of view
-      aspect,       // aspect ratio
-      0.1,          // near clipping plane
-      1000          // far clipping plane
-    );
-    
-    // Position camera at 45-degree angle for isometric view
-    this.camera.position.set(8, 8, 8);
+    // ── Camera ─────────────────────────────────────────────────────────────
+    // Straight-on perspective from white's side (slightly elevated)
+    this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
+    // Center on X, elevated on Y, in front of white on +Z
+    this.camera.position.set(0, 9, 11);
     this.camera.lookAt(0, 0, 0);
 
-    // Renderer setup
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    // ── Renderer ───────────────────────────────────────────────────────────
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFShadowShadowMap;
     this.container.appendChild(this.renderer.domElement);
 
-    // Lighting - optimized for angled view
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    this.scene.add(ambientLight);
+    // ── Lighting ───────────────────────────────────────────────────────────
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.55));
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(10, 15, 10);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
-    directionalLight.shadow.camera.far = 50;
-    directionalLight.shadow.camera.left = -20;
-    directionalLight.shadow.camera.right = 20;
-    directionalLight.shadow.camera.top = 20;
-    directionalLight.shadow.camera.bottom = -20;
-    this.scene.add(directionalLight);
+    const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+    sun.position.set(5, 14, 8);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left   = -15;
+    sun.shadow.camera.right  =  15;
+    sun.shadow.camera.top    =  15;
+    sun.shadow.camera.bottom = -15;
+    sun.shadow.camera.far    = 50;
+    this.scene.add(sun);
 
-    // Create board
+    // Fill light from opposite side
+    const fill = new THREE.DirectionalLight(0xffffff, 0.3);
+    fill.position.set(-5, 8, -8);
+    this.scene.add(fill);
+
     this.createBoard();
 
-    // Handle window resize
     window.addEventListener('resize', () => this.onWindowResize());
-
-    // Start animation loop
     this.animate();
   }
 
+  // ── Board ─────────────────────────────────────────────────────────────────
   createBoard() {
     this.boardGroup = new THREE.Group();
     this.scene.add(this.boardGroup);
 
-    const colors = {
-      light: 0xf0e6d2,
-      dark: 0x8b7355
-    };
+    const SQ  = 1.4;   // square size
+    const SH  = 0.12;  // square height
+    const OFF = 4.9;   // offset to center: (7 * 1.4) / 2 ≈ 4.9
 
-    const squareSize = 1.4;  // Much larger squares
-    const squareHeight = 0.1;
+    // Board base slab
+    const baseGeom = new THREE.BoxGeometry(SQ * 8 + 0.3, SH * 0.8, SQ * 8 + 0.3);
+    const baseMat  = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 0.9 });
+    const base = new THREE.Mesh(baseGeom, baseMat);
+    base.position.y = -SH * 0.9;
+    base.receiveShadow = true;
+    this.boardGroup.add(base);
 
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 8; col++) {
         const isLight = (row + col) % 2 === 0;
-        const color = isLight ? colors.light : colors.dark;
-
-        // Create square geometry
-        const squareGeom = new THREE.BoxGeometry(squareSize, squareHeight, squareSize);
-        const squareMat = new THREE.MeshStandardMaterial({
-          color: color,
-          roughness: 0.8,
+        const sqGeom  = new THREE.BoxGeometry(SQ, SH, SQ);
+        const sqMat   = new THREE.MeshStandardMaterial({
+          color: isLight ? 0xf0ddb0 : 0x8b5e3c,
+          roughness: 0.7,
           metalness: 0.0
         });
+        const sq = new THREE.Mesh(sqGeom, sqMat);
+        sq.position.set(col * SQ - OFF, 0, row * SQ - OFF);
+        sq.receiveShadow = true;
+        sq.userData = { type: 'square', row, col };
+        this.boardGroup.add(sq);
 
-        const square = new THREE.Mesh(squareGeom, squareMat);
-        square.position.set(col * squareSize - 4.9, 0, row * squareSize - 4.9);
-        square.castShadow = true;
-        square.receiveShadow = true;
-        square.userData = { row, col };
-
-        // Add subtle highlight for legal moves
-        const highlightGeom = new THREE.PlaneGeometry(squareSize * 0.85, squareSize * 0.85);
-        const highlightMat = new THREE.MeshStandardMaterial({
-          color: 0xffff00,
+        // Highlight overlay (invisible until needed)
+        const hlGeom = new THREE.PlaneGeometry(SQ * 0.88, SQ * 0.88);
+        const hlMat  = new THREE.MeshStandardMaterial({
+          color: 0x44ff44,
           transparent: true,
           opacity: 0,
-          emissive: 0xffff00
+          depthWrite: false
         });
-        const highlight = new THREE.Mesh(highlightGeom, highlightMat);
-        highlight.position.set(col * squareSize - 4.9, 0.06, row * squareSize - 4.9);
-        highlight.userData = { type: 'highlight', row, col };
-
-        this.boardGroup.add(square);
-        this.boardGroup.add(highlight);
+        const hl = new THREE.Mesh(hlGeom, hlMat);
+        hl.rotation.x = -Math.PI / 2;
+        hl.position.set(col * SQ - OFF, SH / 2 + 0.01, row * SQ - OFF);
+        hl.userData = { type: 'highlight', row, col };
+        this.boardGroup.add(hl);
       }
     }
   }
 
+  // ── Pieces ────────────────────────────────────────────────────────────────
   addPiece(row, col, piece) {
     const key = `${row}-${col}`;
-    const squareSize = 1.4;
+    const SQ  = 1.4;
+    const OFF = 4.9;
 
-    // Remove existing piece at this location
     if (this.pieces[key]) {
       this.boardGroup.remove(this.pieces[key]);
-    }
-
-    if (!piece) {
       delete this.pieces[key];
-      return;
     }
+    if (!piece) return;
 
-    // Bright contrasting colors for pieces
-    const color = piece.color === 'white' ? 0xffffff : 0x000000;
-    const geometry = this.getPieceGeometry(piece.type);
-    
-    const material = new THREE.MeshStandardMaterial({
-      color: color,
-      roughness: 0.3,
-      metalness: 0.5,
-      emissive: piece.color === 'white' ? 0x888888 : 0x333333
+    const isWhite = piece.color === 'white';
+    const mat = new THREE.MeshStandardMaterial({
+      color    : isWhite ? 0xf8f0e0 : 0x1a1008,
+      roughness: 0.35,
+      metalness: 0.45,
+      emissive : isWhite ? 0x666655 : 0x222211
     });
 
-    // Create container group for piece
-    const pieceGroup = new THREE.Group();
-    pieceGroup.position.set(col * squareSize - 4.9, 0.1, row * squareSize - 4.9);
-    pieceGroup.userData = { piece, row, col, key };
+    const group = this.buildPiece(piece.type, mat);
+    group.position.set(col * SQ - OFF, 0.12, row * SQ - OFF);
+    group.userData = { piece, row, col, key, type: 'piece' };
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
 
-    // Handle both Group and Geometry returns from getPieceGeometry
-    if (geometry.isGroup) {
-      // Composite piece (like rook, bishop, queen, king)
-      geometry.children.forEach(child => {
-        if (child.geometry) {
-          const mesh = new THREE.Mesh(child.geometry, material);
-          mesh.position.copy(child.position);
-          mesh.rotation.copy(child.rotation);
-          mesh.castShadow = true;
-          mesh.receiveShadow = true;
-          pieceGroup.add(mesh);
-        }
-      });
-    } else {
-      // Simple geometry (like pawn)
-      const pieceModel = new THREE.Mesh(geometry, material);
-      pieceModel.castShadow = true;
-      pieceModel.receiveShadow = true;
-      pieceGroup.add(pieceModel);
-    }
-
-    this.boardGroup.add(pieceGroup);
-    this.pieces[key] = pieceGroup;
+    this.boardGroup.add(group);
+    this.pieces[key] = group;
   }
 
-  getPieceGeometry(type) {
-    const size = 0.55;
+  buildPiece(type, mat) {
+    const s = 0.52; // base size unit
+
+    const mesh  = (geom) => new THREE.Mesh(geom, mat);
+    const cyl   = (rt, rb, h, seg=16) => new THREE.CylinderGeometry(rt, rb, h, seg);
+    const cone  = (r, h, seg=16)      => new THREE.ConeGeometry(r, h, seg);
+    const sph   = (r, seg=16)         => new THREE.SphereGeometry(r, seg, seg);
+    const box   = (x, y, z)           => new THREE.BoxGeometry(x, y, z);
+
+    const g = new THREE.Group();
 
     switch (type) {
-      case 'pawn':
-        // Pawn: small sphere on top of a cylinder
-        const pawnGroup = new THREE.Group();
-        const pawnBase = new THREE.CylinderGeometry(size * 0.35, size * 0.4, size * 0.5, 16);
-        const pawnHead = new THREE.SphereGeometry(size * 0.28, 16, 16);
-        const pawnBaseMesh = new THREE.Mesh(pawnBase);
-        const pawnHeadMesh = new THREE.Mesh(pawnHead);
-        pawnHeadMesh.position.y = size * 0.45;
-        pawnGroup.add(pawnBaseMesh);
-        pawnGroup.add(pawnHeadMesh);
-        return pawnGroup;
-
-      case 'knight':
-        // Knight: tall box (horse head approximation)
-        return new THREE.BoxGeometry(size * 0.5, size * 1.0, size * 0.45);
-
-      case 'bishop':
-        // Bishop: cone on cylinder
-        const bishopGroup = new THREE.Group();
-        const bishopBase = new THREE.CylinderGeometry(size * 0.35, size * 0.4, size * 0.5, 16);
-        const bishopTop = new THREE.ConeGeometry(size * 0.32, size * 0.85, 16);
-        const bishopBaseMesh = new THREE.Mesh(bishopBase);
-        const bishopTopMesh = new THREE.Mesh(bishopTop);
-        bishopTopMesh.position.y = size * 0.75;
-        bishopGroup.add(bishopBaseMesh);
-        bishopGroup.add(bishopTopMesh);
-        return bishopGroup;
-
-      case 'rook':
-        // Rook: castle tower with crenellations
-        const rookGroup = new THREE.Group();
-        const rookBase = new THREE.CylinderGeometry(size * 0.4, size * 0.4, size * 0.95, 16);
-        const rookBaseMesh = new THREE.Mesh(rookBase);
-        rookGroup.add(rookBaseMesh);
-        // Add top squares for crenellations
+      case 'pawn': {
+        const base = mesh(cyl(s*0.38, s*0.44, s*0.55));
+        const neck = mesh(cyl(s*0.22, s*0.3,  s*0.18));
+        const head = mesh(sph(s*0.3));
+        neck.position.y = s * 0.37;
+        head.position.y = s * 0.55;
+        g.add(base, neck, head);
+        break;
+      }
+      case 'knight': {
+        const base  = mesh(cyl(s*0.38, s*0.44, s*0.5));
+        const body  = mesh(cyl(s*0.28, s*0.38, s*0.35));
+        const head  = mesh(box(s*0.55, s*0.65, s*0.38));
+        const snout = mesh(box(s*0.35, s*0.22, s*0.28));
+        base.position.y  = 0;
+        body.position.y  = s * 0.42;
+        head.position.y  = s * 0.88;
+        snout.position.y = s * 0.78;
+        snout.position.z = s * 0.3;
+        g.add(base, body, head, snout);
+        break;
+      }
+      case 'bishop': {
+        const base  = mesh(cyl(s*0.38, s*0.44, s*0.52));
+        const neck  = mesh(cyl(s*0.2,  s*0.3,  s*0.18));
+        const body  = mesh(cyl(s*0.26, s*0.2,  s*0.55));
+        const tip   = mesh(cone(s*0.18, s*0.42));
+        const ball  = mesh(sph(s*0.12));
+        neck.position.y = s * 0.35;
+        body.position.y = s * 0.72;
+        tip.position.y  = s * 1.17;
+        ball.position.y = s * 1.4;
+        g.add(base, neck, body, tip, ball);
+        break;
+      }
+      case 'rook': {
+        const base = mesh(cyl(s*0.42, s*0.46, s*0.5));
+        const body = mesh(cyl(s*0.35, s*0.42, s*0.6));
+        const top  = mesh(cyl(s*0.42, s*0.35, s*0.22));
+        base.position.y = 0;
+        body.position.y = s * 0.55;
+        top.position.y  = s * 0.96;
+        g.add(base, body, top);
+        // Battlements
         for (let i = 0; i < 4; i++) {
-          const crenGeom = new THREE.BoxGeometry(size * 0.15, size * 0.3, size * 0.15);
-          const crenMesh = new THREE.Mesh(crenGeom);
-          const angle = (Math.PI / 2) * i;
-          crenMesh.position.x = Math.cos(angle) * size * 0.35;
-          crenMesh.position.z = Math.sin(angle) * size * 0.35;
-          crenMesh.position.y = size * 0.6;
-          rookGroup.add(crenMesh);
+          const cr = mesh(box(s*0.18, s*0.26, s*0.18));
+          const a  = (Math.PI / 2) * i + Math.PI / 4;
+          cr.position.set(Math.cos(a)*s*0.32, s*1.14, Math.sin(a)*s*0.32);
+          g.add(cr);
         }
-        return rookGroup;
-
-      case 'queen':
-        // Queen: cylinder with decorative crown on top
-        const queenGroup = new THREE.Group();
-        const queenBase = new THREE.CylinderGeometry(size * 0.32, size * 0.38, size * 0.6, 16);
-        const queenMid = new THREE.CylinderGeometry(size * 0.28, size * 0.32, size * 0.5, 16);
-        const queenTop = new THREE.SphereGeometry(size * 0.25, 16, 16);
-        const queenBaseMesh = new THREE.Mesh(queenBase);
-        const queenMidMesh = new THREE.Mesh(queenMid);
-        const queenTopMesh = new THREE.Mesh(queenTop);
-        queenMidMesh.position.y = size * 0.55;
-        queenTopMesh.position.y = size * 1.0;
-        queenGroup.add(queenBaseMesh);
-        queenGroup.add(queenMidMesh);
-        queenGroup.add(queenTopMesh);
-        return queenGroup;
-
-      case 'king':
-        // King: tall crown with cross on top
-        const kingGroup = new THREE.Group();
-        const kingBase = new THREE.CylinderGeometry(size * 0.3, size * 0.36, size * 0.6, 16);
-        const kingMid = new THREE.CylinderGeometry(size * 0.26, size * 0.3, size * 0.6, 16);
-        const kingTop = new THREE.SphereGeometry(size * 0.22, 16, 16);
-        const kingCross1 = new THREE.BoxGeometry(size * 0.08, size * 0.35, size * 0.08);
-        const kingCross2 = new THREE.BoxGeometry(size * 0.08, size * 0.35, size * 0.08);
-        const kingBaseMesh = new THREE.Mesh(kingBase);
-        const kingMidMesh = new THREE.Mesh(kingMid);
-        const kingTopMesh = new THREE.Mesh(kingTop);
-        const kingCross1Mesh = new THREE.Mesh(kingCross1);
-        const kingCross2Mesh = new THREE.Mesh(kingCross2);
-        kingMidMesh.position.y = size * 0.6;
-        kingTopMesh.position.y = size * 1.05;
-        kingCross1Mesh.position.y = size * 1.25;
-        kingCross2Mesh.position.y = size * 1.25;
-        kingCross2Mesh.rotation.z = Math.PI / 2;
-        kingGroup.add(kingBaseMesh);
-        kingGroup.add(kingMidMesh);
-        kingGroup.add(kingTopMesh);
-        kingGroup.add(kingCross1Mesh);
-        kingGroup.add(kingCross2Mesh);
-        return kingGroup;
-
-      default:
-        return new THREE.CylinderGeometry(size * 0.35, size * 0.4, size * 0.8, 16);
+        break;
+      }
+      case 'queen': {
+        const base  = mesh(cyl(s*0.4,  s*0.46, s*0.5));
+        const waist = mesh(cyl(s*0.22, s*0.32, s*0.22));
+        const body  = mesh(cyl(s*0.34, s*0.22, s*0.7));
+        const crown = mesh(sph(s*0.3));
+        base.position.y  = 0;
+        waist.position.y = s * 0.36;
+        body.position.y  = s * 0.77;
+        crown.position.y = s * 1.22;
+        g.add(base, waist, body, crown);
+        // Crown spikes
+        for (let i = 0; i < 5; i++) {
+          const sp = mesh(cone(s*0.07, s*0.3));
+          const a  = (Math.PI * 2 / 5) * i;
+          sp.position.set(Math.cos(a)*s*0.28, s*1.42, Math.sin(a)*s*0.28);
+          g.add(sp);
+        }
+        break;
+      }
+      case 'king': {
+        const base  = mesh(cyl(s*0.42, s*0.46, s*0.5));
+        const waist = mesh(cyl(s*0.22, s*0.34, s*0.22));
+        const body  = mesh(cyl(s*0.32, s*0.22, s*0.75));
+        const head  = mesh(cyl(s*0.36, s*0.32, s*0.2));
+        base.position.y  = 0;
+        waist.position.y = s * 0.36;
+        body.position.y  = s * 0.8;
+        head.position.y  = s * 1.27;
+        g.add(base, waist, body, head);
+        // Cross
+        const cv = mesh(box(s*0.1, s*0.42, s*0.1));
+        const ch = mesh(box(s*0.32, s*0.1, s*0.1));
+        cv.position.y = s * 1.68;
+        ch.position.y = s * 1.78;
+        g.add(cv, ch);
+        break;
+      }
+      default: {
+        g.add(mesh(cyl(s*0.35, s*0.42, s*0.85)));
+      }
     }
+    return g;
   }
 
-  highlightSquare(row, col, color = 0xffff00) {
-    const highlights = this.boardGroup.children.filter(child => child.userData.type === 'highlight');
-    highlights.forEach(h => {
-      h.material.opacity = 0;
-    });
+  // ── Highlights ────────────────────────────────────────────────────────────
+  highlightSquare(row, col, color = 0x44ff44) {
+    const highlights = this.boardGroup.children.filter(c => c.userData.type === 'highlight');
+    highlights.forEach(h => { h.material.opacity = 0; });
 
     const target = highlights.find(h => h.userData.row === row && h.userData.col === col);
     if (target) {
       target.material.color.setHex(color);
-      target.material.opacity = 0.3;
+      target.material.opacity = 0.45;
     }
-
     this.selectedSquare = { row, col };
   }
 
   clearHighlights() {
-    const highlights = this.boardGroup.children.filter(child => child.userData.type === 'highlight');
-    highlights.forEach(h => {
-      h.material.opacity = 0;
-    });
+    this.boardGroup.children
+      .filter(c => c.userData.type === 'highlight')
+      .forEach(h => { h.material.opacity = 0; });
     this.selectedSquare = null;
   }
 
+  // ── Ray-cast click to board square ────────────────────────────────────────
   getSquareAtPixel(x, y) {
     const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-
-    const width = this.container.clientWidth;
-    const height = this.container.clientHeight;
-    mouse.x = (x / width) * 2 - 1;
-    mouse.y = -(y / height) * 2 + 1;
-
+    const mouse = new THREE.Vector2(
+      (x / this.container.clientWidth)  *  2 - 1,
+      (y / this.container.clientHeight) * -2 + 1
+    );
     raycaster.setFromCamera(mouse, this.camera);
 
-    const squares = this.boardGroup.children.filter(
-      child => child.geometry instanceof THREE.BoxGeometry
-    );
-
-    const intersects = raycaster.intersectObjects(squares);
-    if (intersects.length > 0) {
-      const square = intersects[0].object;
-      return square.userData;
-    }
-
-    return null;
+    const squares = this.boardGroup.children.filter(c => c.userData.type === 'square');
+    const hits = raycaster.intersectObjects(squares);
+    return hits.length > 0 ? hits[0].object.userData : null;
   }
 
+  // ── Sync board state ──────────────────────────────────────────────────────
   updateBoard(board) {
-    // Clear all pieces
     Object.keys(this.pieces).forEach(key => {
       this.boardGroup.remove(this.pieces[key]);
     });
     this.pieces = {};
 
-    // Add pieces from new board state
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 8; col++) {
-        const piece = board[row][col];
-        this.addPiece(row, col, piece);
+        this.addPiece(row, col, board[row][col]);
       }
     }
   }
 
+  // ── Render loop ───────────────────────────────────────────────────────────
   animate() {
     requestAnimationFrame(() => this.animate());
     this.renderer.render(this.scene, this.camera);
   }
 
   onWindowResize() {
-    const width = this.container.clientWidth;
-    const height = this.container.clientHeight;
-    const aspect = width / height;
-
-    // Update perspective camera
-    this.camera.aspect = aspect;
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+    this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
-    
-    this.renderer.setSize(width, height);
+    this.renderer.setSize(w, h);
   }
 
   dispose() {
     this.renderer.dispose();
-    this.container.removeChild(this.renderer.domElement);
+    if (this.renderer.domElement.parentNode) {
+      this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+    }
   }
 }
 
