@@ -285,8 +285,8 @@ body {
   transition: background-color 0.12s;
 }
 
-.sq-light { background: #f0f0d0; }
-.sq-dark  { background: #538a30; }
+.sq-light { background: #f9f9f9; }
+.sq-dark  { background: #333333; }
 
 .board-sq:hover { filter: brightness(1.1); }
 
@@ -324,19 +324,16 @@ body {
   z-index: 2;
 }
 
-/* White pieces: solid white fill with black outline */
+/* White pieces: dark outline symbols — clear on both light and dark squares */
 .piece-white {
-  color: #ffffff;
-  -webkit-text-stroke: 1.5px #222;
-  paint-order: stroke fill;
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+  color: #111111;
+  filter: drop-shadow(0 1px 2px rgba(255,255,255,0.4));
 }
 
-/* Black pieces: solid black fill with subtle white outline */
+/* Black pieces: solid black fill, visible on light squares */
 .piece-black {
   color: #111111;
-  -webkit-text-stroke: 0.5px #555;
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.4));
+  filter: drop-shadow(0 1px 2px rgba(255,255,255,0.6));
 }
 
 .game-actions {

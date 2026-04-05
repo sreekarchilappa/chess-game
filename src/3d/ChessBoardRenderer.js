@@ -9,10 +9,9 @@ class ChessBoardRenderer {
     this._build();
   }
 
-  // Unicode chess pieces — use FILLED (black) symbols for both colors,
-  // then CSS color handles white vs black appearance (filled symbols look solid)
+  // White pieces use hollow outline symbols, black pieces use filled symbols
   static SYMBOLS = {
-    white: { king:'♚', queen:'♛', rook:'♜', bishop:'♝', knight:'♞', pawn:'♟' },
+    white: { king:'♔', queen:'♕', rook:'♖', bishop:'♗', knight:'♘', pawn:'♙' },
     black: { king:'♚', queen:'♛', rook:'♜', bishop:'♝', knight:'♞', pawn:'♟' }
   };
 
