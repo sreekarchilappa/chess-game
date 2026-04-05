@@ -9,6 +9,7 @@ class ChessGameApp {
     this.gameController = new GameController();
     this.renderer = null;
     this.currentDifficulty = 1;
+    this.music = null; // Web Audio music state
     this.setupEventListeners();
     this.updateStatsDisplay();
     console.log('ChessGameApp initialized successfully');
@@ -23,6 +24,7 @@ class ChessGameApp {
     // Game screen buttons
     document.getElementById('btnUndo')?.addEventListener('click', () => this.undoMove());
     document.getElementById('btnResign')?.addEventListener('click', () => this.resignGame());
+    document.getElementById('btnMusic')?.addEventListener('click', () => this.toggleMusic());
 
     // Game end screen buttons
     document.getElementById('btnPlayAgain')?.addEventListener('click', () => this.playAgain());
@@ -270,6 +272,95 @@ class ChessGameApp {
     if (screen) {
       screen.classList.add('active');
     }
+  }
+
+  // ── Background Music (Web Audio API - no external files needed) ───────────
+  toggleMusic() {
+    if (this.music && this.music.playing) {
+      this.stopMusic();
+    } else {
+      this.startMusic();
+    }
+  }
+
+  startMusic() {
+    try {
+      if (!this.music) {
+        this.music = { ctx: new (window.AudioContext || window.webkitAudioContext)(), playing: false, nodes: [] };
+      }
+      if (this.music.ctx.state === 'suspended') {
+        this.music.ctx.resume();
+      }
+
+      // Chill ambient melody: pentatonic notes that loop
+      const ctx = this.music.ctx;
+      const masterGain = ctx.createGain();
+      masterGain.gain.value = 0.12;
+      masterGain.connect(ctx.destination);
+
+      // Reverb-like delay for ambience
+      const delay = ctx.createDelay(1.0);
+      delay.delayTime.value = 0.45;
+      const feedback = ctx.createGain();
+      feedback.gain.value = 0.35;
+      delay.connect(feedback);
+      feedback.connect(delay);
+      delay.connect(masterGain);
+
+      // Pentatonic scale notes (Hz) for a peaceful loop
+      const notes = [261.6, 293.7, 329.6, 392.0, 440.0, 523.3, 587.3, 659.3];
+      const melody = [0, 2, 4, 5, 4, 2, 0, 1, 3, 5, 4, 3, 2, 0, 4, 5];
+      const tempo = 0.55; // seconds per note
+
+      let time = ctx.currentTime + 0.1;
+      const totalDuration = melody.length * tempo;
+
+      const scheduleLoop = (startTime) => {
+        melody.forEach((noteIdx, i) => {
+          const osc  = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = notes[noteIdx];
+          osc.connect(gain);
+          gain.connect(delay);
+          gain.connect(masterGain);
+
+          const t = startTime + i * tempo;
+          gain.gain.setValueAtTime(0, t);
+          gain.gain.linearRampToValueAtTime(0.5, t + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + tempo * 0.85);
+
+          osc.start(t);
+          osc.stop(t + tempo);
+          this.music.nodes.push(osc, gain);
+        });
+        // Schedule next loop
+        this.music.loopTimer = setTimeout(() => {
+          if (this.music && this.music.playing) {
+            scheduleLoop(ctx.currentTime + 0.05);
+          }
+        }, (totalDuration - 0.3) * 1000);
+      };
+
+      scheduleLoop(time);
+      this.music.nodes.push(masterGain, delay, feedback);
+      this.music.playing = true;
+
+      const btn = document.getElementById('btnMusic');
+      if (btn) btn.textContent = '🔊 Music';
+    } catch (e) {
+      console.warn('Music unavailable:', e);
+    }
+  }
+
+  stopMusic() {
+    if (!this.music) return;
+    clearTimeout(this.music.loopTimer);
+    this.music.nodes.forEach(n => { try { n.disconnect(); } catch(e) {} });
+    this.music.nodes = [];
+    this.music.playing = false;
+    const btn = document.getElementById('btnMusic');
+    if (btn) btn.textContent = '🔇 Music';
   }
 }
 
