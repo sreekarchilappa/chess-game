@@ -1,0 +1,14 @@
+{
+  "name": "chess-game",
+  "version": "1.0.0",
+  "description": "Monument Valley-style Chess Game with Bot AI",
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server 3000",
+    "build": "echo 'Build setup pending Node.js installation'"
+  },
+  "keywords": ["chess", "game", "ai", "bot"],
+  "author": "Chess Game Dev",
+  "license": "MIT",
+  "dependencies": {}
+}
