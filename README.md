@@ -1,122 +1,97 @@
-# Monument Valley Chess Game
+# ♟️ Chess Game
 
-A beautiful, cross-platform chess game with Monument Valley–inspired 3D visuals, featuring both single-player bot battles with progressive difficulty and local 2-player mode.
+A fully playable chess game built with vanilla JavaScript — no frameworks, no internet required. Play against the **Stockfish** engine (the world's #1 chess AI) or challenge a friend locally.
+
+**Live on:** [GitHub](https://github.com/sreekarchilappa/chess-game)
+
+---
 
 ## Features
 
-### Game Modes
-1. **Single-Player vs Bot**
-   - 4 difficulty levels: Easy, Medium, Hard, Impossible
-   - Progressive difficulty scaling: earn up to 5 points per level to unlock the next
-   - Minimax AI with alpha-beta pruning
-   - Adjustable search depth (2-5) based on difficulty
+- **vs Bot** — 4 difficulty levels powered by Stockfish
+- **2 Player** — local same-screen multiplayer
+- **Progressive difficulty** — win 5 games to level up automatically
+- **Sound effects** — capture thud, danger chord on check, victory fanfare on checkmate
+- **Background music** — chill ambient loop, toggle on/off
+- **Stats tracking** — wins, losses, streaks saved in browser
+- **Full chess rules** — castling, en passant, promotion, stalemate, 50-move draw
 
-2. **Local 2-Player**
-   - Play on the same screen against a friend
-   - Full chess rules implementation
-   - Turn indicator and game state display
+---
 
-### Visual Design
-- Monument Valley–inspired isometric perspective
-- 3D rendering with Three.js
-- Soft lighting and geometric aesthetics
-- Smooth piece animations
-- Responsive design for web and mobile
+## Difficulty Levels
 
-### Gameplay Features
-- Full chess rules: castling, en passant, pawn promotion, checkmate detection
-- Move validation with check detection
-- Game statistics tracking (wins, losses, win streaks)
-- Local persistence with browser localStorage
-- Settings panel for managing progress
+| Level | Stockfish Think Time | Strength |
+|-------|---------------------|----------|
+| Easy | 50ms | Beginner |
+| Medium | 300ms | Intermediate |
+| Hard | 1,000ms | Advanced |
+| Impossible | 3,000ms | Grandmaster |
 
-## How to Play
+---
 
-### Running Locally
+## Play Now (Browser)
+
 ```bash
-cd /Users/Kiran/Applications/ChessApp
+# Clone the repo
+git clone https://github.com/sreekarchilappa/chess-game.git
+cd chess-game
+
+# Start local server
 python3 -m http.server 3000
+
+# Open in browser
+# http://localhost:3000
 ```
-Then open http://localhost:3000 in your browser.
 
-### Game Controls
-- Click on a piece to select it (highlighted in green)
-- Click on a destination square to move
-- Current turn indicator shows whose move it is
-- View your stats in the main menu
+> Requires a local server (not `file://`) because Stockfish runs as a Web Worker.
 
-### Bot Difficulty
-- **Easy** (Level 1): 2-move lookahead, basic evaluation
-- **Medium** (Level 2): 3-move lookahead, positional awareness
-- **Hard** (Level 3): 4-move lookahead, tactical pattern recognition
-- **Impossible** (Level 4): 5-move lookahead, complete evaluation
+---
 
-Beat a bot at each level and earn 5 points to unlock the next difficulty!
+## Tech Stack
+
+| Part | Technology |
+|------|-----------|
+| Chess engine (rules) | Vanilla JavaScript |
+| Bot AI | [Stockfish.js](https://github.com/nmrugg/stockfish.js) via Web Worker |
+| Board rendering | HTML/CSS DOM (2D) |
+| Sound & music | Web Audio API (no audio files needed) |
+| Storage | localStorage |
+| Server | Python `http.server` |
+
+---
 
 ## Project Structure
 
 ```
-/src
-  /game
-    ChessEngine.js         - Core chess rules and move validation
-    BotAI.js               - Minimax algorithm with difficulty scaling
-    DifficultyManager.js   - Progression system (levels 1-4, points tracking)
-    GameController.js      - Main game orchestration
-    GameState.js           - Player stats and localStorage persistence
-  /3d
-    ChessBoardRenderer.js  - Three.js scene setup and rendering
-  /styles
-    main.css               - Monument Valley–inspired styling
-  main.js                  - Application entry point
-
-index.html                 - Main HTML file
-package.json              - Project metadata
+chess-game/
+├── index.html                  # Main HTML
+├── src/
+│   ├── main.js                 # App entry point, UI, sound
+│   ├── ChessBoardRenderer.js   # DOM board, piece rendering, highlights
+│   ├── stockfish.js            # Stockfish engine (Web Worker, 1.5MB)
+│   ├── styles/
+│   │   └── main.css
+│   └── game/
+│       ├── ChessEngine.js      # Chess rules, FEN generation
+│       ├── StockfishBot.js     # Stockfish UCI wrapper
+│       ├── GameController.js   # Game flow, move handling
+│       ├── DifficultyManager.js # Progressive difficulty (5-point system)
+│       └── GameState.js        # localStorage persistence
 ```
-
-## Technology Stack
-
-- **Frontend**: Vanilla JavaScript (ES6 modules)
-- **Graphics**: Three.js (3D rendering)
-- **Storage**: Browser localStorage
-- **Deployment**: Web-first (easy deployment to Vercel, Netlify)
-- **Mobile**: Capacitor (wrap web app for iOS/Android stores)
-
-## Planned Enhancements
-
-- [ ] Sound effects and background music
-- [ ] Move undo/redo functionality
-- [ ] Online multiplayer via WebSockets
-- [ ] Leaderboards and social features
-- [ ] More customization options (themes, piece sets)
-- [ ] Chess puzzle mode
-- [ ] Opening book integration for bot
-
-## Deployment
-
-### Web Hosting
-1. Build: Project is ready to deploy as-is (no build step needed for basic deployment)
-2. Deploy to Vercel or Netlify: just push the repository
-3. Enable HTTPS for security
-
-### Mobile Apps
-1. Install Capacitor: `npm install @capacitor/core @capacitor/cli`
-2. Initialize: `npx cap init`
-3. Build for iOS: `npx cap open ios` (requires Xcode)
-4. Build for Android: `npx cap open android` (requires Android Studio)
-5. Submit to App Store and Google Play Store
-
-## Browser Support
-
-- Chrome/Chromium (recommended)
-- Firefox
-- Safari
-- Edge
-- Mobile browsers (iOS Safari, Chrome Mobile)
-
-## License
-
-MIT - Feel free to use and modify for personal or commercial projects.
 
 ---
 
-Made with ❤️ by Kiran
+## Roadmap
+
+- [ ] Deploy to web (Vercel/Netlify)
+- [ ] Mobile apps (iOS & Android via Capacitor)
+- [ ] Undo move
+- [ ] Move history panel
+- [ ] Online multiplayer
+
+---
+
+## Author
+
+**Sreekar Chilappa**
+
