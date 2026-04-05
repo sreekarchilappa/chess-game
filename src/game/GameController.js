@@ -199,7 +199,9 @@ class GameController {
 
   setRenderer(renderer) {
     this.renderer = renderer;
-    renderer.updateBoard(this.engine.board);
+    if (renderer && this.engine && this.engine.board) {
+      renderer.updateBoard(this.engine.board);
+    }
   }
 }
 

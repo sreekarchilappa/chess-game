@@ -10,7 +10,13 @@ class ChessBoardRenderer {
     this.pieces = {};
     this.selectedSquare = null;
 
-    this.initialize();
+    // Check if Three.js is available
+    if (typeof THREE === 'undefined') {
+      console.error('Three.js not loaded. Waiting...');
+      setTimeout(() => this.initialize(), 500);
+    } else {
+      this.initialize();
+    }
   }
 
   initialize() {

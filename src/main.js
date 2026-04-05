@@ -5,11 +5,13 @@ import ChessBoardRenderer from './3d/ChessBoardRenderer.js';
 
 class ChessGameApp {
   constructor() {
+    console.log('Initializing ChessGameApp...');
     this.gameController = new GameController();
     this.renderer = null;
     this.currentDifficulty = 1;
     this.setupEventListeners();
     this.updateStatsDisplay();
+    console.log('ChessGameApp initialized successfully');
   }
 
   setupEventListeners() {
@@ -56,18 +58,39 @@ class ChessGameApp {
 
     // Initialize renderer if not already done
     if (!this.renderer) {
-      const boardElement = document.getElementById('gameBoard');
-      this.renderer = new ChessBoardRenderer(boardElement);
-      this.gameController.setRenderer(this.renderer);
+      try {
+        const boardElement = document.getElementById('gameBoard');
+        if (!boardElement) {
+          console.error('Game board element not found');
+          return;
+        }
+        
+        // Check if Three.js is available
+        if (typeof THREE === 'undefined') {
+          console.error('Three.js not yet loaded, retrying...');
+          setTimeout(() => this.startGame(), 500);
+          return;
+        }
+        
+        this.renderer = new ChessBoardRenderer(boardElement);
+        this.gameController.setRenderer(this.renderer);
+      } catch (error) {
+        console.error('Failed to initialize renderer:', error);
+        alert('Failed to load game board. Please refresh the page.');
+        this.backToMenu();
+        return;
+      }
     }
 
     // Update initial board state
-    this.renderer.updateBoard(this.gameController.engine.board);
-    this.updateGameInfo();
+    if (this.renderer && this.gameController.engine) {
+      this.renderer.updateBoard(this.gameController.engine.board);
+      this.updateGameInfo();
 
-    // If it's bot mode and it's bot's turn, make bot move
-    if (this.gameController.gameMode === 'bot' && this.gameController.engine.currentPlayer === 'black') {
-      setTimeout(() => this.gameController.makeBotMove(), 500);
+      // If it's bot mode and it's bot's turn, make bot move
+      if (this.gameController.gameMode === 'bot' && this.gameController.engine.currentPlayer === 'black') {
+        setTimeout(() => this.gameController.makeBotMove(), 500);
+      }
     }
   }
 
@@ -225,6 +248,29 @@ class ChessGameApp {
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  window.app = new ChessGameApp();
-  window.app.showMainMenu();
+  try {
+    window.app = new ChessGameApp();
+    window.app.showMainMenu();
+    console.log('✓ Chess game initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize chess game:', error);
+    alert('Error initializing game. Please refresh the page.');
+  }
 });
+
+// Fallback for older browsers
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!window.app) {
+      console.log('Retrying initialization...');
+      window.app = new ChessGameApp();
+      window.app.showMainMenu();
+    }
+  });
+} else {
+  // DOM already loaded
+  if (!window.app) {
+    window.app = new ChessGameApp();
+    window.app.showMainMenu();
+  }
+}
