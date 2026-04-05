@@ -28,9 +28,9 @@
                     </div>
                 </div>
                 <div class="menu-buttons">
-                    <button class="btn btn-primary" onclick="app.startBotGame()">Play vs Bot</button>
-                    <button class="btn btn-secondary" onclick="app.startTwoPlayerGame()">2-Player Local</button>
-                    <button class="btn btn-tertiary" onclick="app.showSettings()">Settings</button>
+                    <button class="btn btn-primary" onclick="window.app && window.app.startBotGame()">Play vs Bot</button>
+                    <button class="btn btn-secondary" onclick="window.app && window.app.startTwoPlayerGame()">2-Player Local</button>
+                    <button class="btn btn-tertiary" onclick="window.app && window.app.showSettings()">Settings</button>
                 </div>
             </div>
         </div>
@@ -49,8 +49,8 @@
                 </div>
                 <div id="gameBoard" class="game-board"></div>
                 <div class="game-actions">
-                    <button class="btn btn-small" onclick="app.undoMove()">Undo</button>
-                    <button class="btn btn-small" onclick="app.resignGame()">Resign</button>
+                    <button class="btn btn-small" onclick="window.app && window.app.undoMove()">Undo</button>
+                    <button class="btn btn-small" onclick="window.app && window.app.resignGame()">Resign</button>
                 </div>
             </div>
         </div>
@@ -64,8 +64,8 @@
                     <div id="pointsEarned"></div>
                 </div>
                 <div class="result-buttons">
-                    <button class="btn btn-primary" onclick="app.playAgain()">Play Again</button>
-                    <button class="btn btn-secondary" onclick="app.backToMenu()">Back to Menu</button>
+                    <button class="btn btn-primary" onclick="window.app && window.app.playAgain()">Play Again</button>
+                    <button class="btn btn-secondary" onclick="window.app && window.app.backToMenu()">Back to Menu</button>
                 </div>
             </div>
         </div>
@@ -75,24 +75,24 @@
             <div class="difficulty-container">
                 <h2>Select Difficulty</h2>
                 <div class="difficulty-buttons">
-                    <button class="difficulty-btn" onclick="app.selectDifficulty(1)">
+                    <button class="difficulty-btn" onclick="window.app && window.app.selectDifficulty(1)">
                         <div class="difficulty-level">Easy</div>
                         <div class="difficulty-desc">Great for learning</div>
                     </button>
-                    <button class="difficulty-btn" onclick="app.selectDifficulty(2)">
+                    <button class="difficulty-btn" onclick="window.app && window.app.selectDifficulty(2)">
                         <div class="difficulty-level">Medium</div>
                         <div class="difficulty-desc">A fair challenge</div>
                     </button>
-                    <button class="difficulty-btn" onclick="app.selectDifficulty(3)">
+                    <button class="difficulty-btn" onclick="window.app && window.app.selectDifficulty(3)">
                         <div class="difficulty-level">Hard</div>
                         <div class="difficulty-desc">Very challenging</div>
                     </button>
-                    <button class="difficulty-btn" onclick="app.selectDifficulty(4)">
+                    <button class="difficulty-btn" onclick="window.app && window.app.selectDifficulty(4)">
                         <div class="difficulty-level">Impossible</div>
                         <div class="difficulty-desc">Face the ultimate challenge</div>
                     </button>
                 </div>
-                <button class="btn btn-secondary" onclick="app.showMainMenu()">Cancel</button>
+                <button class="btn btn-secondary" onclick="window.app && window.app.showMainMenu()">Cancel</button>
             </div>
         </div>
 
@@ -105,8 +105,8 @@
                     <label>Points: <span id="settingsDifficultyPoints">0</span>/5</label>
                 </div>
                 <div class="settings-buttons">
-                    <button class="btn btn-warning" onclick="app.resetStats()">Reset All Stats</button>
-                    <button class="btn btn-secondary" onclick="app.showMainMenu()">Back to Menu</button>
+                    <button class="btn btn-warning" onclick="window.app && window.app.resetStats()">Reset All Stats</button>
+                    <button class="btn btn-secondary" onclick="window.app && window.app.showMainMenu()">Back to Menu</button>
                 </div>
             </div>
         </div>
