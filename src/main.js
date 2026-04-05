@@ -9,9 +9,27 @@ class ChessGameApp {
     this.gameController = new GameController();
     this.renderer = null;
     this.currentDifficulty = 1;
+    this.musicEnabled = false;
+    this.audioElement = null;
     this.setupEventListeners();
     this.updateStatsDisplay();
+    this.initializeMusic();
     console.log('ChessGameApp initialized successfully');
+  }
+
+  initializeMusic() {
+    this.audioElement = document.getElementById('backgroundMusic');
+    if (this.audioElement) {
+      this.audioElement.volume = 0.3; // Set to 30% volume
+      // Try to play, but don't fail if autoplay is blocked
+      const playPromise = this.audioElement.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          console.log('Autoplay blocked. Music can be enabled by clicking the button.');
+          this.musicEnabled = false;
+        });
+      }
+    }
   }
 
   setupEventListeners() {
@@ -23,6 +41,7 @@ class ChessGameApp {
     // Game screen buttons
     document.getElementById('btnUndo')?.addEventListener('click', () => this.undoMove());
     document.getElementById('btnResign')?.addEventListener('click', () => this.resignGame());
+    document.getElementById('btnMusic')?.addEventListener('click', () => this.toggleMusic());
 
     // Game end screen buttons
     document.getElementById('btnPlayAgain')?.addEventListener('click', () => this.playAgain());
@@ -249,6 +268,33 @@ class ChessGameApp {
       this.gameController.gameState.saveDifficultyProgress(this.gameController.difficultyManager.getState());
       this.updateStatsDisplay();
       alert('Statistics reset!');
+    }
+  }
+
+  toggleMusic() {
+    const musicBtn = document.getElementById('btnMusic');
+    if (!this.audioElement) return;
+
+    if (this.musicEnabled) {
+      this.audioElement.pause();
+      this.musicEnabled = false;
+      if (musicBtn) {
+        musicBtn.textContent = '🔇';
+        musicBtn.classList.add('muted');
+      }
+    } else {
+      const playPromise = this.audioElement.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          this.musicEnabled = true;
+          if (musicBtn) {
+            musicBtn.textContent = '🔊';
+            musicBtn.classList.remove('muted');
+          }
+        }).catch(() => {
+          console.log('Could not play music');
+        });
+      }
     }
   }
 
