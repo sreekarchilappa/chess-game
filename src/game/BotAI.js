@@ -175,7 +175,7 @@ class BotAI {
     // Attacking opponent pieces
     const legalMoves = gameEngine.getLegalMoves();
     for (const move of legalMoves) {
-      const toRow = parseInt(move[3]);
+      const toRow = 8 - parseInt(move.slice(3, 4));
       const toCol = move.charCodeAt(2) - 'a'.charCodeAt(0);
       const target = gameEngine.getPiece(toRow, toCol);
 

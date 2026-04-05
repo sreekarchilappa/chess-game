@@ -396,8 +396,14 @@ class ChessEngine {
     }
 
     this.moveHistory.push(moveNotation);
-    this.halfmoveClock += 1;
-    if (piece.type === 'pawn' || target) this.halfmoveClock = 0;
+    
+    // Pawn move or capture resets halfmove clock
+    const capturedPiece = this.getPiece(toRow, toCol);
+    if (piece.type === 'pawn' || this.moveHistory.length > 1) {
+      this.halfmoveClock = 0;
+    } else {
+      this.halfmoveClock += 1;
+    }
 
     this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
     if (this.currentPlayer === 'white') this.fullmoveNumber += 1;
