@@ -1,14 +1,14 @@
 // Main game controller - orchestrates game flow
 
 import ChessEngine from './ChessEngine.js';
-import BotAI from './BotAI.js';
+import StockfishBot from './StockfishBot.js';
 import DifficultyManager from './DifficultyManager.js';
 import GameState from './GameState.js';
 
 class GameController {
   constructor() {
     this.engine = new ChessEngine();
-    this.botAI = new BotAI();
+    this.stockfish = new StockfishBot();
     this.difficultyManager = new DifficultyManager();
     this.gameState = new GameState();
     this.renderer = null;
@@ -17,21 +17,24 @@ class GameController {
     this.isPlayerTurn = true;
     this.gameOver = false;
     this.gameResult = null;
+
+    // Sound callbacks — set by the app
+    this.onCapture = null;
+    this.onCheck = null;
+    this.onCheckmate = null;
   }
 
   initializeBotGame(difficulty = 1) {
     this.engine.resetGame();
     this.gameMode = 'bot';
     this.gameState.initializeBotGame(difficulty);
-    this.difficultyManager.resetToLevel(difficulty);
     this.selectedSquare = null;
     this.isPlayerTurn = true;
     this.gameOver = false;
     this.gameResult = null;
 
-    // Load any saved progress
-    const saved = this.gameState.loadDifficultyProgress();
-    this.difficultyManager.setState(saved);
+    // Always start at the level the player chose — never override with saved progress
+    this.difficultyManager.resetToLevel(difficulty);
   }
 
   initializeTwoPlayerGame() {
@@ -76,7 +79,11 @@ class GameController {
     const toNotation = this.engine.coordsToNotation(row, col);
     const moveNotation = fromNotation + toNotation;
 
+    const targetPiece = this.engine.getPiece(row, col);
+
     if (this.engine.makeMove(moveNotation)) {
+      if (targetPiece && this.onCapture) this.onCapture();
+
       // Move successful
       this.selectedSquare = null;
       if (this.renderer) {
@@ -108,19 +115,27 @@ class GameController {
     }
   }
 
-  makeBotMove() {
+  async makeBotMove() {
     if (this.gameOver) return;
 
     const difficulty = this.difficultyManager.getCurrentLevel();
-    const move = this.botAI.getBestMove(this.engine, difficulty);
+    const movetime = StockfishBot.getMovetime(difficulty);
+    const fen = this.engine.toFEN();
 
-    if (!move) {
-      // No legal moves
+    const move = await this.stockfish.getBestMove(fen, movetime);
+
+    if (!move || this.gameOver) {
       this.checkGameEnd();
       return;
     }
 
+    // Stockfish returns UCI notation e.g. "e2e4" or "e7e8q" (promotion)
+    // Our engine uses same format already
+    const [toRow, toCol] = this.engine.notationToCoords(move.slice(2, 4));
+    const targetPiece = this.engine.getPiece(toRow, toCol);
+
     this.engine.makeMove(move);
+    if (targetPiece && this.onCapture) this.onCapture();
 
     if (this.renderer) {
       this.renderer.updateBoard(this.engine.board);
@@ -137,6 +152,7 @@ class GameController {
       this.gameOver = true;
       const winner = this.engine.currentPlayer === 'white' ? 'black' : 'white';
       this.gameResult = { type: 'checkmate', winner };
+      if (this.onCheckmate) this.onCheckmate();
       this.onGameEnd();
       return;
     }
@@ -146,6 +162,10 @@ class GameController {
       this.gameResult = { type: 'draw' };
       this.onGameEnd();
       return;
+    }
+
+    if (state.isInCheck && this.onCheck) {
+      this.onCheck();
     }
   }
 
@@ -165,14 +185,9 @@ class GameController {
 
       this.gameState.recordBotGameResult(resultType);
       this.gameState.saveDifficultyProgress(this.difficultyManager.getState());
-
-      console.log(`Game Over: ${resultType}`);
-      console.log(`Current difficulty: ${this.difficultyManager.getDifficultyName()}`);
-      console.log(`Points: ${this.difficultyManager.getPoints()}/${this.difficultyManager.maxPoints}`);
     } else {
       const winner = this.gameResult.type === 'draw' ? 'draw' : this.gameResult.winner;
       this.gameState.recordTwoPlayerGameResult(winner);
-      console.log(`Game Over: ${winner}`);
     }
 
     // Emit game end event for UI to handle

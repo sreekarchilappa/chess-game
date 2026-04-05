@@ -1,18 +1,16 @@
 // Main application entry point
 
 import GameController from './game/GameController.js';
-import ChessBoardRenderer from './3d/ChessBoardRenderer.js';
+import ChessBoardRenderer from './ChessBoardRenderer.js';
 
 class ChessGameApp {
   constructor() {
-    console.log('Initializing ChessGameApp...');
     this.gameController = new GameController();
     this.renderer = null;
     this.currentDifficulty = 1;
-    this.music = null; // Web Audio music state
+    this.music = null;
     this.setupEventListeners();
     this.updateStatsDisplay();
-    console.log('ChessGameApp initialized successfully');
   }
 
   setupEventListeners() {
@@ -121,6 +119,12 @@ class ChessGameApp {
     this.renderer = new ChessBoardRenderer(boardElement);
     this.gameController.setRenderer(this.renderer);
     this.renderer.updateBoard(this.gameController.engine.board);
+
+    // Wire up sound callbacks
+    this.gameController.onCapture = () => this.playCaptureSfx();
+    this.gameController.onCheck = () => this.playCheckSfx();
+    this.gameController.onCheckmate = () => this.playVictorySfx();
+
     this.updateGameInfo();
 
     if (this.gameController.gameMode === 'bot' && this.gameController.engine.currentPlayer === 'black') {
@@ -166,7 +170,6 @@ class ChessGameApp {
   }
 
   undoMove() {
-    // TODO: Implement undo functionality
     console.log('Undo not yet implemented');
   }
 
@@ -310,7 +313,6 @@ class ChessGameApp {
       const melody = [0, 2, 4, 5, 4, 2, 0, 1, 3, 5, 4, 3, 2, 0, 4, 5];
       const tempo = 0.55; // seconds per note
 
-      let time = ctx.currentTime + 0.1;
       const totalDuration = melody.length * tempo;
 
       const scheduleLoop = (startTime) => {
@@ -340,7 +342,7 @@ class ChessGameApp {
         }, (totalDuration - 0.3) * 1000);
       };
 
-      scheduleLoop(time);
+      scheduleLoop(ctx.currentTime + 0.1);
       this.music.nodes.push(masterGain, delay, feedback);
       this.music.playing = true;
 
@@ -360,63 +362,111 @@ class ChessGameApp {
     const btn = document.getElementById('btnMusic');
     if (btn) btn.textContent = '🔇 Music';
   }
+
+  _getSfxContext() {
+    if (!this.music) {
+      this.music = { ctx: new (window.AudioContext || window.webkitAudioContext)(), playing: false, nodes: [] };
+    }
+    if (this.music.ctx.state === 'suspended') this.music.ctx.resume();
+    return this.music.ctx;
+  }
+
+  playCaptureSfx() {
+    try {
+      const ctx = this._getSfxContext();
+      const now = ctx.currentTime;
+      // Thud + metallic ring
+      [80, 160, 320].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = i === 2 ? 'sine' : 'triangle';
+        osc.frequency.setValueAtTime(freq, now);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.3, now + 0.25);
+        gain.gain.setValueAtTime(0.35 - i * 0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.32);
+      });
+    } catch(e) {}
+  }
+
+  playCheckSfx() {
+    try {
+      const ctx = this._getSfxContext();
+      const now = ctx.currentTime;
+      // Tense staccato danger chord
+      const notes = [220, 277.2, 369.99]; // Am chord
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, now + i * 0.07);
+        gain.gain.linearRampToValueAtTime(0.18, now + i * 0.07 + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.7);
+      });
+      // Extra low bass hit
+      const bass = ctx.createOscillator();
+      const bassGain = ctx.createGain();
+      bass.type = 'sine';
+      bass.frequency.setValueAtTime(110, now);
+      bass.frequency.exponentialRampToValueAtTime(55, now + 0.4);
+      bassGain.gain.setValueAtTime(0.4, now);
+      bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+      bass.connect(bassGain);
+      bassGain.connect(ctx.destination);
+      bass.start(now);
+      bass.stop(now + 0.5);
+    } catch(e) {}
+  }
+
+  playVictorySfx() {
+    try {
+      const ctx = this._getSfxContext();
+      const now = ctx.currentTime;
+      // Triumphant ascending fanfare
+      const fanfare = [523.3, 659.3, 783.99, 1046.5];
+      fanfare.forEach((freq, i) => {
+        const t = now + i * 0.18;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.001, t);
+        gain.gain.linearRampToValueAtTime(0.3, t + 0.05);
+        gain.gain.setValueAtTime(0.3, t + 0.25);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.6);
+      });
+      // Harmony on top
+      const harmony = [659.3, 783.99, 987.77, 1318.5];
+      harmony.forEach((freq, i) => {
+        const t = now + i * 0.18 + 0.05;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.55);
+      });
+    } catch(e) {}
+  }
 }
 
 // Initialize app when DOM is ready
-console.log('=== Chess Game Script Loading ===');
-console.log('Current time:', new Date().toISOString());
-
-let appInitialized = false;
-
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('DOMContentLoaded event fired');
-  console.log('ChessGameApp available?', typeof ChessGameApp);
-  console.log('window.app before init:', window.app);
-  
-  try {
-    if (typeof ChessGameApp === 'undefined') {
-      console.error('ERROR: ChessGameApp class not found! Module import may have failed.');
-      // Create a placeholder to avoid errors
-      window.app = {
-        startBotGame: () => alert('Game is loading, please wait...'),
-        startTwoPlayerGame: () => alert('Game is loading, please wait...'),
-        showSettings: () => alert('Game is loading, please wait...'),
-        selectDifficulty: () => alert('Game is loading, please wait...'),
-        playAgain: () => alert('Game is loading, please wait...'),
-        backToMenu: () => alert('Game is loading, please wait...'),
-        showMainMenu: () => alert('Game is loading, please wait...'),
-        undoMove: () => alert('Game is loading, please wait...'),
-        resignGame: () => alert('Game is loading, please wait...'),
-        resetStats: () => alert('Game is loading, please wait...')
-      };
-      return;
-    }
-    
-    console.log('Creating ChessGameApp instance...');
-    window.app = new ChessGameApp();
-    appInitialized = true;
-    console.log('✓ Chess game initialized successfully');
-    console.log('window.app methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.app)));
-  } catch (error) {
-    console.error('FAILED to initialize chess game:', error);
-    console.error('Error stack:', error.stack);
-    alert('Error initializing game: ' + error.message + '\n\nPlease open browser console (F12) for more details.');
-  }
+  window.app = new ChessGameApp();
 });
-
-// Fallback - wait a bit and try again if needed
-setTimeout(() => {
-  console.log('Timeout check - app initialized?', appInitialized);
-  if (!appInitialized && document.readyState === 'complete') {
-    console.log('Retrying initialization...');
-    try {
-      if (typeof ChessGameApp !== 'undefined' && !window.app) {
-        window.app = new ChessGameApp();
-        appInitialized = true;
-        console.log('✓ Chess game initialized on retry');
-      }
-    } catch (error) {
-      console.error('Retry failed:', error);
-    }
-  }
-}, 3000);

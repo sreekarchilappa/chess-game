@@ -411,6 +411,50 @@ class ChessEngine {
     copy.fullmoveNumber  = this.fullmoveNumber;
     return copy;
   }
+
+  // Generate FEN string for this position (needed by Stockfish)
+  toFEN() {
+    const pieceChar = { pawn:'p', knight:'n', bishop:'b', rook:'r', queen:'q', king:'k' };
+    let fen = '';
+
+    for (let row = 0; row < 8; row++) {
+      let empty = 0;
+      for (let col = 0; col < 8; col++) {
+        const p = this.board[row][col];
+        if (!p) {
+          empty++;
+        } else {
+          if (empty > 0) { fen += empty; empty = 0; }
+          const ch = pieceChar[p.type];
+          fen += p.color === 'white' ? ch.toUpperCase() : ch;
+        }
+      }
+      if (empty > 0) fen += empty;
+      if (row < 7) fen += '/';
+    }
+
+    // Active color
+    fen += ' ' + (this.currentPlayer === 'white' ? 'w' : 'b');
+
+    // Castling
+    let castling = '';
+    if (this.castlingRights.white.kingside)  castling += 'K';
+    if (this.castlingRights.white.queenside) castling += 'Q';
+    if (this.castlingRights.black.kingside)  castling += 'k';
+    if (this.castlingRights.black.queenside) castling += 'q';
+    fen += ' ' + (castling || '-');
+
+    // En passant
+    if (this.enPassantTarget) {
+      const [r, c] = this.enPassantTarget;
+      fen += ' ' + this.coordsToNotation(r, c);
+    } else {
+      fen += ' -';
+    }
+
+    fen += ' ' + this.halfmoveClock + ' ' + this.fullmoveNumber;
+    return fen;
+  }
 }
 
 export default ChessEngine;

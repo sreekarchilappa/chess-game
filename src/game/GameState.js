@@ -60,8 +60,7 @@ class GameState {
       draws: 0,
       currentWinStreak: 0,
       maxWinStreak: 0,
-      twoPlayerGames: 0,
-      totalPlayTime: 0
+      twoPlayerGames: 0
     };
     this.saveStats();
   }
@@ -69,13 +68,8 @@ class GameState {
   loadStats() {
     const saved = localStorage.getItem('chessGameStats');
     if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to load stats:', e);
-      }
+      try { return JSON.parse(saved); } catch (e) {}
     }
-
     return {
       totalGames: 0,
       wins: 0,
@@ -83,8 +77,7 @@ class GameState {
       draws: 0,
       currentWinStreak: 0,
       maxWinStreak: 0,
-      twoPlayerGames: 0,
-      totalPlayTime: 0
+      twoPlayerGames: 0
     };
   }
 
@@ -99,33 +92,9 @@ class GameState {
   loadDifficultyProgress() {
     const saved = localStorage.getItem('chessGameDifficulty');
     if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to load difficulty progress:', e);
-      }
+      try { return JSON.parse(saved); } catch (e) {}
     }
     return { level: 1, points: 0, winStreak: 0 };
-  }
-
-  saveGamePosition(engineState) {
-    localStorage.setItem('chessGamePosition', JSON.stringify(engineState));
-  }
-
-  loadGamePosition() {
-    const saved = localStorage.getItem('chessGamePosition');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to load game position:', e);
-      }
-    }
-    return null;
-  }
-
-  clearGamePosition() {
-    localStorage.removeItem('chessGamePosition');
   }
 }
 
