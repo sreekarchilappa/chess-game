@@ -139,55 +139,66 @@ class ChessBoardRenderer {
       return;
     }
 
-    const color = piece.color === 'white' ? 0xf5f5f5 : 0x1a1a1a;
+    // Bright contrasting colors for pieces
+    const color = piece.color === 'white' ? 0xffffff : 0x000000;
     const geometry = this.getPieceGeometry(piece.type);
     
     const material = new THREE.MeshStandardMaterial({
       color: color,
-      roughness: 0.4,
-      metalness: 0.2
+      roughness: 0.3,
+      metalness: 0.4,
+      emissive: piece.color === 'white' ? 0x999999 : 0x444444
     });
 
     const pieceModel = new THREE.Mesh(geometry, material);
-    pieceModel.position.set(col * squareSize - 4.9, 0, row * squareSize - 4.9);
+    pieceModel.position.set(col * squareSize - 4.9, 0.1, row * squareSize - 4.9);
     pieceModel.castShadow = true;
     pieceModel.receiveShadow = true;
     pieceModel.userData = { piece, row, col, key };
 
+    // Add outline/edge to make pieces more visible
+    const edges = new THREE.EdgesGeometry(geometry);
+    const lineSegments = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({
+      color: piece.color === 'white' ? 0x000000 : 0xffffff,
+      linewidth: 2
+    }));
+    lineSegments.position.copy(pieceModel.position);
+
     this.boardGroup.add(pieceModel);
+    this.boardGroup.add(lineSegments);
     this.pieces[key] = pieceModel;
   }
 
   getPieceGeometry(type) {
-    const size = 0.45;
+    const size = 0.65; // Increased from 0.45 to make pieces bigger
 
     switch (type) {
       case 'pawn':
         // Small cone with base
-        return new THREE.ConeGeometry(size * 0.35, size * 0.7, 8);
+        return new THREE.ConeGeometry(size * 0.5, size * 0.9, 16);
 
       case 'knight':
         // Box shape - distinctive
-        return new THREE.BoxGeometry(size * 0.4, size * 0.8, size * 0.35);
+        return new THREE.BoxGeometry(size * 0.6, size * 1.0, size * 0.5);
 
       case 'bishop':
         // Tall thin cone
-        return new THREE.ConeGeometry(size * 0.3, size * 1.0, 8);
+        return new THREE.ConeGeometry(size * 0.42, size * 1.3, 16);
 
       case 'rook':
         // Short wide cylinder
-        return new THREE.CylinderGeometry(size * 0.32, size * 0.35, size * 0.75, 8);
+        return new THREE.CylinderGeometry(size * 0.48, size * 0.5, size * 0.95, 16);
 
       case 'queen':
         // Tall cylinder
-        return new THREE.CylinderGeometry(size * 0.3, size * 0.33, size * 0.95, 8);
+        return new THREE.CylinderGeometry(size * 0.45, size * 0.48, size * 1.2, 16);
 
       case 'king':
         // Tallest cylinder with different proportions
-        return new THREE.CylinderGeometry(size * 0.28, size * 0.32, size * 1.1, 8);
+        return new THREE.CylinderGeometry(size * 0.42, size * 0.46, size * 1.4, 16);
 
       default:
-        return new THREE.CylinderGeometry(size * 0.3, size * 0.33, size * 0.8, 8);
+        return new THREE.CylinderGeometry(size * 0.45, size * 0.48, size * 0.95, 16);
     }
   }
 
