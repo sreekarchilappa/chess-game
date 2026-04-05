@@ -190,13 +190,6 @@ class ChessBoardRenderer {
         return new THREE.CylinderGeometry(size * 0.3, size * 0.33, size * 0.8, 8);
     }
   }
-        const kingGeom = new THREE.ConeGeometry(size * 0.35, size * 1.6, 8);
-        return kingGeom;
-
-      default:
-        return new THREE.BoxGeometry(size, size, size);
-    }
-  }
 
   highlightSquare(row, col, color = 0xffff00) {
     const highlights = this.boardGroup.children.filter(child => child.userData.type === 'highlight');
