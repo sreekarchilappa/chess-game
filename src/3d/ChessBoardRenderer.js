@@ -9,9 +9,9 @@ class ChessBoardRenderer {
     this._build();
   }
 
-  // White pieces use hollow outline symbols, black pieces use filled symbols
+  // Both use filled symbols — CSS color + stroke makes white vs black
   static SYMBOLS = {
-    white: { king:'♔', queen:'♕', rook:'♖', bishop:'♗', knight:'♘', pawn:'♙' },
+    white: { king:'♚', queen:'♛', rook:'♜', bishop:'♝', knight:'♞', pawn:'♟' },
     black: { king:'♚', queen:'♛', rook:'♜', bishop:'♝', knight:'♞', pawn:'♟' }
   };
 
