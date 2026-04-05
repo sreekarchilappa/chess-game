@@ -61,8 +61,32 @@ class ChessGameApp {
 
       const square = this.renderer.getSquareAtPixel(x, y);
       if (square) {
+        // Show legal move dots before handling the click
+        const fromNotation = this.gameController.engine.coordsToNotation(square.row, square.col);
+        const piece = this.gameController.engine.getPiece(square.row, square.col);
+        const currentPlayer = this.gameController.engine.currentPlayer;
+
+        if (piece && piece.color === currentPlayer && !this.gameController.selectedSquare) {
+          const legalMoves = this.gameController.engine.getLegalMoves();
+          this.renderer.clearHighlights();
+          this.renderer.highlightSquare(square.row, square.col);
+          this.renderer.highlightLegalMoves(legalMoves, fromNotation);
+        }
+
         this.gameController.handleSquareClick(square.row, square.col);
         this.updateGameInfo();
+
+        // Highlight king in check
+        if (this.gameController.engine.isInCheck(this.gameController.engine.currentPlayer)) {
+          for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+              const p = this.gameController.engine.getPiece(r, c);
+              if (p && p.type === 'king' && p.color === this.gameController.engine.currentPlayer) {
+                this.renderer.highlightCheck(r, c);
+              }
+            }
+          }
+        }
       }
     });
   }
@@ -85,41 +109,22 @@ class ChessGameApp {
   startGame() {
     this.showScreen('gameScreen');
 
-    // Initialize renderer if not already done
-    if (!this.renderer) {
-      try {
-        const boardElement = document.getElementById('gameBoard');
-        if (!boardElement) {
-          console.error('Game board element not found');
-          return;
-        }
-        
-        // Check if Three.js is available
-        if (typeof THREE === 'undefined') {
-          console.error('Three.js not yet loaded, retrying...');
-          setTimeout(() => this.startGame(), 500);
-          return;
-        }
-        
-        this.renderer = new ChessBoardRenderer(boardElement);
-        this.gameController.setRenderer(this.renderer);
-      } catch (error) {
-        console.error('Failed to initialize renderer:', error);
-        alert('Failed to load game board. Please refresh the page.');
-        this.backToMenu();
-        return;
-      }
+    const boardElement = document.getElementById('gameBoard');
+    if (!boardElement) return;
+
+    // Re-create renderer fresh each game
+    if (this.renderer) {
+      this.renderer.dispose();
+      this.renderer = null;
     }
 
-    // Update initial board state
-    if (this.renderer && this.gameController.engine) {
-      this.renderer.updateBoard(this.gameController.engine.board);
-      this.updateGameInfo();
+    this.renderer = new ChessBoardRenderer(boardElement);
+    this.gameController.setRenderer(this.renderer);
+    this.renderer.updateBoard(this.gameController.engine.board);
+    this.updateGameInfo();
 
-      // If it's bot mode and it's bot's turn, make bot move
-      if (this.gameController.gameMode === 'bot' && this.gameController.engine.currentPlayer === 'black') {
-        setTimeout(() => this.gameController.makeBotMove(), 500);
-      }
+    if (this.gameController.gameMode === 'bot' && this.gameController.engine.currentPlayer === 'black') {
+      setTimeout(() => this.gameController.makeBotMove(), 500);
     }
   }
 
@@ -157,13 +162,6 @@ class ChessGameApp {
     } else {
       this.gameController.initializeTwoPlayerGame();
     }
-
-    // Clear renderer and reinitialize
-    if (this.renderer) {
-      this.renderer.dispose();
-      this.renderer = null;
-    }
-
     this.startGame();
   }
 

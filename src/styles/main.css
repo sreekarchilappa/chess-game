@@ -205,11 +205,122 @@ body {
 .game-board {
   flex: 1;
   width: 100%;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
   overflow: hidden;
+}
+
+/* ── 2D Board Layout ──────────────────────────────────────── */
+.board-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  /* Make board as large as will fit */
+  width:  min(calc(100vh - 160px), calc(100vw - 40px));
+  height: min(calc(100vh - 160px), calc(100vw - 40px));
+}
+
+.board-ranks {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: calc(100% - 26px); /* subtract file-label row height */
+  padding-bottom: 4px;
+  font-size: clamp(10px, 1.5vw, 14px);
+  font-weight: bold;
+  color: #7a6040;
+  user-select: none;
+  min-width: 18px;
+  text-align: right;
+  padding-right: 4px;
+}
+
+.board-right {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  gap: 4px;
+}
+
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows:    repeat(8, 1fr);
+  flex: 1;
+  border: 3px solid #3a2a10;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+
+.board-files {
+  display: flex;
+  justify-content: space-around;
+  font-size: clamp(10px, 1.5vw, 14px);
+  font-weight: bold;
+  color: #7a6040;
+  user-select: none;
+  padding: 0 2px;
+}
+
+/* ── Squares ──────────────────────────────────────────────── */
+.board-sq {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.sq-light { background: #f0f0d0; }
+.sq-dark  { background: #538a30; }
+
+.board-sq:hover { filter: brightness(1.12); }
+
+/* Highlights */
+.sq-selected { background: #f6f669 !important; }
+.sq-legal::after {
+  content: '';
+  position: absolute;
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+/* Legal move on occupied square — ring instead of dot */
+.sq-legal:has(.piece)::after {
+  width: 90%;
+  height: 90%;
+  background: transparent;
+  border: 4px solid rgba(0,0,0,0.22);
+}
+.sq-check { background: #ff4444 !important; }
+
+/* ── Piece symbols ────────────────────────────────────────── */
+.piece {
+  font-size: clamp(18px, 5.5vw, 52px);
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.35));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.piece-white {
+  color: #ffffff;
+  filter: drop-shadow(0 0 1px #000) drop-shadow(1px 2px 3px rgba(0,0,0,0.5));
+}
+
+.piece-black {
+  color: #111111;
+  filter: drop-shadow(0 0 1px #fff) drop-shadow(1px 2px 3px rgba(0,0,0,0.4));
 }
 
 .game-actions {
